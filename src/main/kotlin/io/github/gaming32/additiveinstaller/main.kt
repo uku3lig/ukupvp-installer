@@ -20,7 +20,7 @@ const val VERSION = "<<VERSION>>"
 val I18N = ResourceBundle.getBundle("i18n/lang", Locale.getDefault())!!
 
 fun main() {
-    logger.info { "Additive Installer $VERSION" }
+    logger.info { "ukupvp Installer $VERSION" }
 
     if (isDarkMode()) {
         if (operatingSystem == OperatingSystem.MACOS) {
@@ -36,9 +36,7 @@ fun main() {
         }
     }
 
-    val additive = Modpack("additive")
-    val adrenaline = Modpack("adrenaline")
-    var selectedPack = additive
+    val selectedPack = Modpack("ukupvp", "uku's pvp modpack")
 
     val installDestChooser = JFileChooser(PackInstaller.DOT_MINECRAFT.toString()).apply {
         fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
@@ -49,12 +47,11 @@ fun main() {
     }
 
     SwingUtilities.invokeLater { JFrame(selectedPack.windowTitle).apply root@ {
-        iconImage = selectedPack.image
+        iconImage = selectedPack.appIcon
 
-        val iconLabel = JLabel(ImageIcon(selectedPack.image))
+        val iconLabel = JLabel(ImageIcon(selectedPack.banner))
 
         val minecraftVersion = JComboBox<String>()
-        val includeUnsupportedMinecraft = JCheckBox(I18N.getString("include.unsupported.minecraft"))
         val packVersion = JComboBox<String>()
         val loaderSelector = JComboBox<String>()
 
@@ -79,41 +76,22 @@ fun main() {
                 ?.get(selectedVersion) ?: return@addItemListener
             loaderSelector.removeAllItems()
             for ((loader, version) in loaders) {
-                if (version.isSupported || includeUnsupportedMinecraft.isSelected) {
-                    loaderSelector.addItem(loader.name.lowercase().capitalize())
-                }
+                loaderSelector.addItem(loader.name.lowercase().capitalize())
             }
         }
 
         fun setupMinecraftVersions() {
             val mcVersion = minecraftVersion.selectedItem
             minecraftVersion.removeAllItems()
-            val all = includeUnsupportedMinecraft.isSelected
-            val supported = selectedPack.supportedMcVersions
             selectedPack.versions
                 .keys
                 .asSequence()
-                .filter { all || it in supported }
                 .forEach(minecraftVersion::addItem)
             if (mcVersion != null) {
                 minecraftVersion.selectedItem = mcVersion
             }
         }
         setupMinecraftVersions()
-
-        includeUnsupportedMinecraft.addActionListener { setupMinecraftVersions() }
-
-        val includeFeatures = JCheckBox(I18N.getString("include.non.performance.features")).apply {
-            isSelected = true
-            addActionListener {
-                selectedPack = if (isSelected) additive else adrenaline
-                title = selectedPack.windowTitle
-                iconImage = selectedPack.image
-                iconLabel.icon = ImageIcon(selectedPack.image)
-
-                setupMinecraftVersions()
-            }
-        }
 
         val installProgress = JProgressBar().apply {
             isStringPainted = true
@@ -186,9 +164,7 @@ fun main() {
         }
 
         enableOptions = {
-            includeFeatures.isEnabled = it
             minecraftVersion.isEnabled = it
-            includeUnsupportedMinecraft.isEnabled = it
             packVersion.isEnabled = it
             loaderSelector.isEnabled = it
             installationDir.isEnabled = it
@@ -205,12 +181,8 @@ fun main() {
                 add(iconLabel, BorderLayout.PAGE_START)
             })
             add(Box.createVerticalStrut(15))
-            add(includeFeatures.withLabel())
-            add(Box.createVerticalStrut(15))
             add(minecraftVersion.withLabel(I18N.getString("minecraft.version")))
             add(Box.createVerticalStrut(5))
-            add(includeUnsupportedMinecraft.withLabel())
-            add(Box.createVerticalStrut(15))
             add(packVersion.withLabel(I18N.getString("pack.version")))
             add(Box.createVerticalStrut(5))
             add(loaderSelector.withLabel(I18N.getString("mod.loader")))
